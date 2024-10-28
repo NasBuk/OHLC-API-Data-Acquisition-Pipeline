@@ -52,7 +52,7 @@ The master bash script enables full automation via cron job automation, running 
 - **[automate_datasets.sh](automate_datasets.sh)**  
    The master automation script that sequentially activates each component of the workflow, streamlining the data download, processing, auditing, and Kaggle upload steps.
 
-- **[Jupyter Notebook: Multi-Exchange BTC/USD Data Integration](notebooks/combining-multiple-data-sources-into-an-index.ipynb)** ****  
+- **[Jupyter Notebook: Multi-Exchange BTC/USD Data Integration](notebooks/combining-multiple-data-sources-into-an-index.ipynb)**
    A tutorial-style notebook to guide you through the dataset integration process. Covers data import, gap analysis, OC alignment, volume-weighted averaging, and gap imputation. This resource illustrates how each component works and provides hands-on examples of data visualization.
 
 ## Installation and Setup
@@ -67,33 +67,16 @@ Add API keys and configurations to API_CONFIG. Ensure exchange-specific values a
 
 3. **Set Up Python Environment**
 Install required packages in your Python environment. Recommended to use virtualenv:
+    ```bash
+    python -m venv myenv
+    source myenv/bin/activate
+    pip install -r requirements.txt
 
-### Data Processing and Quality Checks
-
-The repository's workflow includes multiple steps to clean, process, and analyze OHLC data from various exchanges, creating a cohesive and continuous dataset that is automatically updated and uploaded to Kaggle.
-
-#### Workflow Overview
-The following scripts drive the data workflow, creating a combined, volume-weighted OHLC index from multiple exchanges:
-
-1. **`download_klines.py`**: Fetches OHLC data from supported exchanges (as defined in `API_CONFIG`). Handles rate limiting, retries, and centralizes data download parameters for each exchange, enabling easy addition of new datasets.
-
-2. **`combine_ohlc.py`**: Aggregates OHLC data across exchanges into a single, unified dataset for each trading pair. Features:
-   - **Volume-weighted Averaging**: Calculates OHLC values with volume weighting to prioritize data from high-volume exchanges, creating a more market-representative index.
-   - **Data Imputation**: Fills small gaps using a centered moving average to maintain data continuity and ensure consistent analysis.
-   - **Open-Close (OC) Alignment**: Ensures the Open of each candle aligns with the Close of the previous candle, correcting inconsistencies in source data.
-   - **Exchange Mappings**: Automatically maps each trading pair to the exchanges that provide data for it.
-
-3. **`audit_and_metagen.py`**: Performs diagnostics and quality checks on the combined dataset, generating metadata for easy publication to Kaggle. Key features include:
-   - **Data Diagnostics**: Checks for NaNs, duplicate rows, and time discontinuities.
-   - **Image Generation**: Generates styled data tables and OHLC charts, uploaded to Imgur and linked in the metadata.
-   - **Kaggle Metadata Generation**: Creates standardized `metadata.json` files for each dataset, using exchange schemas and currency mappings for consistency.
-
-4. **`file_utils.py`**: Handles loading and saving data across formats (CSV, pickle, numpy) and manages directory paths. Ensures that data from each stage is securely saved and organized for seamless integration.
-
-5. **`master_script.sh`**: Automates the entire process from start to finish, including:
-   - Activating the environment
-   - Running data download, combination, and quality check scripts
-   - Uploading updated datasets to Kaggle with new metadata
+4. **Run the Master Script** Ensure the script is executable and run it:
+    ```bash
+    chmod +x master_script.sh
+    ./master_script.sh
+You can set this up as a cron job to automate daily updates.
 
 #### Example Data Analysis in Jupyter Notebook
 A comprehensive Jupyter notebook (`btc_usd_index_notebook.ipynb`) is provided, walking through the full process of creating a BTC/USD index from multi-exchange data. Key steps include:
@@ -111,11 +94,21 @@ This project is designed for seamless integration with Kaggle:
 
 ### Kaggle Repositories
 Explore the finalized datasets here:
-1. [BTC/USD on Multi-Exchange OHLC Index](#)
-2. [ETH/USD on Multi-Exchange OHLC Index](#)
-3. [ADA/USD on Multi-Exchange OHLC Index](#)
-4. [XRP/USD on Multi-Exchange OHLC Index](#)
-5. [BNB/USD on Multi-Exchange OHLC Index](#)
+1. [BTC/USD on Multi-Exchange OHLC Index](https://www.kaggle.com/datasets/imranbukhari/comprehensive-btcusd-1m-data)
+2. [ETH/USD on Multi-Exchange OHLC Index](https://www.kaggle.com/datasets/imranbukhari/comprehensive-ethusd-1m-data)
+3. [ADA/USD on Multi-Exchange OHLC Index](https://www.kaggle.com/datasets/imranbukhari/comprehensive-adausd-1m-data)
+4. [XRP/USD on Multi-Exchange OHLC Index](https://www.kaggle.com/datasets/imranbukhari/comprehensive-xrpusd-1m-data)
+5. [BNB/USD on Multi-Exchange OHLC Index](https://www.kaggle.com/datasets/imranbukhari/comprehensive-bnbusd-1m-data)
 
-### Contributions & License
-This project is open to contributions and licensed under the [MIT License](LICENSE). Feel free to open issues or pull requests for new exchanges, features, or bug fixes.
+### License
+This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) license.
+
+You are free to:
+- Share: Copy and redistribute the material in any medium or format.
+- Adapt: Remix, transform, and build upon the material.
+
+**Under the following terms:**
+- **Attribution**: You must give appropriate credit, provide a link to the license, and indicate if changes were made.
+- **NonCommercial**: You may not use the material for commercial purposes.
+
+For full details, see the [LICENSE file](LICENSE) or visit the [Creative Commons License page](https://creativecommons.org/licenses/by-nc/4.0/legalcode).
