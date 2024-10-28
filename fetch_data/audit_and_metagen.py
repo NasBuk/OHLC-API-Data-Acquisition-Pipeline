@@ -100,7 +100,7 @@ def process_trading_pair(exchange: str, trading_pair: str, file_format: str) -> 
         return None
 
 
-def upload_image_to_imgur(image_path: str) -> str:
+def upload_image_to_imgur(image_path: str, client_id: str) -> str:
     """
     Uploads an image to Imgur and returns the link.
 
@@ -111,7 +111,7 @@ def upload_image_to_imgur(image_path: str) -> str:
     - str: Link to the uploaded image on Imgur.
     """
     url = "https://api.imgur.com/3/image"
-    headers = {'Authorization': 'Client-ID 4aeb3186fb3fbd1'}
+    headers = {'Authorization': f'Client-ID {client_id}'}
     with open(image_path, 'rb') as image_file:
         response = requests.post(url, headers=headers, files={'image': image_file})
     return response.json()['data']['link']
