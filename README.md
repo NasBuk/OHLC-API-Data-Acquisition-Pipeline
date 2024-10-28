@@ -1,8 +1,8 @@
 # Multi-Exchange Cryptocurrency OHLC Data Integration and Analysis
 
-This repository provides a comprehensive pipeline for aggregating, cleaning, and analyzing OHLC (Open, High, Low, Close) cryptocurrency data from multiple exchanges. By using this solution, you can create a continuous, volume-weighted index dataset for BTC/USD (or any specified pairs) and automate the entire process, from data retrieval to data publishing on Kaggle.
+This repository provides a comprehensive pipeline for aggregating, cleaning, and combining OHLC (Open, High, Low, Close) cryptocurrency data from multiple exchanges. By using this solution, you can create a continuous, volume-weighted index dataset for BTC/USD (or any specified pairs) and automate the entire process, from data retrieval to data publishing on Kaggle.
 
-The master bash script enables full automation, running each Python module in sequence to fetch, process, audit, and upload data. Configurable through `API_CONFIG`, this pipeline is exchange-agnostic—simply add a new API configuration to begin working with a new dataset.
+The master bash script enables full automation via cron job automation, running each Python module in sequence to fetch, process, audit, and upload data. Configurable through `API_CONFIG`, this pipeline is exchange-agnostic—simply add a new API configuration to begin working with a new dataset. This works for any API endpoint that offers OHLCV data, the fetch_data/download_klines.py script is provided as pseudocode for demo purposes as this is proprietary for my own use, if you'd like an asset/exchange added, you can contact me and I'll make the asset available as a dataset on Kaggle.
 
 ## Key Features
 
@@ -10,21 +10,21 @@ The master bash script enables full automation, running each Python module in se
    The bash script automates the entire workflow, from data download to Kaggle upload, supporting a cron job setup for ongoing updates. It allows integration of multiple trading pairs and exchanges through a single configuration file.
 
 2. **Comprehensive Data Integration**  
-   OHLC data from multiple exchanges is integrated and volume-weighted, creating a robust, continuous index. The data cleaning process includes gap detection, imputation, and open-close (OC) alignment.
+   OHLC data from multiple exchanges is integrated and volume-weighted, creating a robust, continuous index. The data cleaning process includes gap detection, imputation, and open-close (OC) alignment. Please see the attached notebook for a walkthrough of how we create an indexed set and to see why certain operations take place during creation.
 
 3. **Exchange-Agnostic Design**  
-   With `API_CONFIG`, exchanges can be added dynamically, allowing scalability and integration of additional cryptocurrency pairs or data sources.
+   With `API_CONFIG`, exchanges can be added dynamically, allowing scalability and integration of additional pairs or data sources. This will work for ANY OHLC data that is offered through an API endpoint.
 
 4. **Kaggle Metadata Generation**  
-   Automatically generates and uploads Kaggle metadata files for each trading pair, streamlining dataset updates for research and machine learning applications.
+   Automatically generates and uploads Kaggle metadata files for each trading pair, streamlining dataset updates for research and machine learning applications. Links to the sets I currently maintain are at the bottom for you to see the end product.
 
 5. **Jupyter Notebook Tutorial**  
    An included Jupyter notebook provides an in-depth walkthrough for integrating, processing, and visualizing the final combined dataset. This notebook demonstrates how to use the aggregated index, analyze data quality, and visualize OHLC data.
 
 ## Repository Structure
 
-- **[fetch_data/download_klines.py](fetch_data/download_klines.py)**  
-   Downloads raw OHLC data from configured APIs, handling rate limits and saving data in a standardized format.
+- **[fetch_data/download_klines-pseudocode.py](fetch_data/download_klines-pseudocode.py)**  
+   Downloads raw OHLC data from configured APIs, handling rate limits, robust error handling, data integrity checks and saving data in a standardized format.
    
 - **[fetch_data/combine_ohlc.py](fetch_data/combine_ohlc.py)**  
    Aggregates data from multiple exchanges to create a volume-weighted averaged index. This module includes:
@@ -49,10 +49,10 @@ The master bash script enables full automation, running each Python module in se
 - **[utils/file_utils.py](utils/file_utils.py)**  
    Utilities for handling file operations, including loading and saving data, creating directories, and managing file paths.
 
-- **[master_script.sh](master_script.sh)**  
+- **[automate_datasets.sh](automate_datasets.sh)**  
    The master automation script that sequentially activates each component of the workflow, streamlining the data download, processing, auditing, and Kaggle upload steps.
 
-- **Jupyter Notebook: Multi-Exchange BTC/USD Data Integration**  
+- **[Jupyter Notebook: Multi-Exchange BTC/USD Data Integration](notebooks/combining-multiple-data-sources-into-an-index.ipynb)** ****  
    A tutorial-style notebook to guide you through the dataset integration process. Covers data import, gap analysis, OC alignment, volume-weighted averaging, and gap imputation. This resource illustrates how each component works and provides hands-on examples of data visualization.
 
 ## Installation and Setup
