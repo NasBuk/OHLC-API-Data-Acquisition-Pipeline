@@ -1,6 +1,6 @@
 # Multi-Exchange Cryptocurrency OHLC Data Integration and Analysis
 
-This repository provides a comprehensive pipeline for aggregating, cleaning, and combining OHLC (Open, High, Low, Close) cryptocurrency data from multiple exchanges. By using this solution, you can create a continuous, volume-weighted index dataset for BTC/USD (or any specified pairs) and automate the entire process, from data retrieval to data publishing on Kaggle.
+This repository provides a comprehensive pipeline for aggregating, cleaning, and combining OHLC (Open, High, Low, Close) cryptocurrency data from multiple exchanges. By using this solution, you can create a continuous, volume-weighted index dataset for any trading pair asset and automate the entire process, from data retrieval to data publishing on Kaggle.
 
 The master bash script enables full automation via cron job automation, running each Python module in sequence to fetch, process, audit, and upload data. Configurable through `API_CONFIG`, this pipeline is exchange-agnostic—simply add a new API configuration to begin working with a new dataset. This works for any API endpoint that offers OHLCV data, the fetch_data/download_klines.py script is provided as pseudocode for demo purposes as this is proprietary for my own use, if you'd like an asset/exchange added, you can contact me and I'll make the asset available as a dataset on Kaggle.
 
@@ -10,7 +10,7 @@ The master bash script enables full automation via cron job automation, running 
    The bash script automates the entire workflow, from data download to Kaggle upload, supporting a cron job setup for ongoing updates. It allows integration of multiple trading pairs and exchanges through a single configuration file.
 
 2. **Comprehensive Data Integration**  
-   OHLC data from multiple exchanges is integrated and volume-weighted, creating a robust, continuous index. The data cleaning process includes gap detection, imputation, and open-close (OC) alignment. Please see the attached notebook for a walkthrough of how we create an indexed set and to see why certain operations take place during creation.
+   OHLC data from multiple exchanges is integrated and volume-weighted, creating a robust, continuous index. The data cleaning process includes gap detection, imputation, and open-close (OC) alignment. 
 
 3. **Exchange-Agnostic Design**  
    With `API_CONFIG`, exchanges can be added dynamically, allowing scalability and integration of additional pairs or data sources. This will work for ANY OHLC data that is offered through an API endpoint.
@@ -53,26 +53,23 @@ The master bash script enables full automation via cron job automation, running 
    The master automation script that sequentially activates each component of the workflow, streamlining the data download, processing, auditing, and Kaggle upload steps.
 
 - **[Jupyter Notebook: Multi-Exchange BTC/USD Data Integration](notebooks/combining-multiple-data-sources-into-an-index.ipynb)**
-   A tutorial-style notebook to guide you through the dataset integration process. Covers data import, gap analysis, OC alignment, volume-weighted averaging, and gap imputation. This resource illustrates how each component works and provides hands-on examples of data visualization.
+   A tutorial-style notebook to guide you through the dataset integration process. Covers data import, gap analysis, OC alignment, volume-weighted averaging, and gap imputation. This resource illustrates how each component works and provides hands-on examples of data visualization. A live version of the notebook is available in my Kaggle dataset repositories, links at the bottom.
 
 ## Installation and Setup
 
 1. **Clone this Repository**
    ```bash
-   git clone https://github.com/your-username/multi-exchange-crypto-ohlc.git
-   cd multi-exchange-crypto-ohlc
+   git clone https://github.com/NasBuk/Automated-Download-Update-OHLC-Dataset-from-any-API-Endpoint.git
+   cd automated-download-update-ohlc-dataset-from-any-api-endpoint
 
-2. **Configure the API**
-Add API keys and configurations to API_CONFIG. Ensure exchange-specific values are correct (endpoint URLs, rate limits, etc.).
-
-3. **Set Up Python Environment**
-Install required packages in your Python environment. Recommended to use virtualenv:
+2. **Set Up Python Environment**
+Install required packages in your Python environment. Recommended to use a virtualenv, ensure you specify the bin/activate in the bash script to automate:
     ```bash
     python -m venv myenv
     source myenv/bin/activate
-    pip install -r requirements.txt
+    pip install -e .
 
-4. **Run the Master Script** Ensure the script is executable and run it:
+3. **Run the Master Script** Ensure the script is executable and run it (you must configure this file with your venv directories and project directory before running):
     ```bash
     chmod +x master_script.sh
     ./master_script.sh
@@ -89,7 +86,7 @@ A comprehensive Jupyter notebook (`btc_usd_index_notebook.ipynb`) is provided, w
 
 This project is designed for seamless integration with Kaggle:
 1. **Automated Metadata**: Each dataset is paired with a dynamic metadata file (`metadata.json`), including title, description, resource links, and data diagnostics images.
-2. **Scheduled Updates**: With the `master_script.sh` as a cron job, all datasets can be kept up-to-date automatically.
+2. **Scheduled Updates**: With the `automate_datasets.sh` as a cron job, all datasets can be kept up-to-date automatically.
 3. **Quick Dataset Addition**: Add new exchange datasets by configuring them in `API_CONFIG`.
 
 ### Kaggle Repositories
