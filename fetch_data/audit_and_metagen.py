@@ -223,6 +223,7 @@ def main() -> None:
     Returns:
     - None
     """
+    client_id = client_id               # Replace with your API client id
     exchanges = list(API_CONFIG.keys())
     exchanges.append('Combined_Index')
     results_pkl = []
@@ -285,8 +286,8 @@ def main() -> None:
         create_dataframe_image(df_subset, trading_pair, dataframe_image_path)
         create_plot_image(df, trading_pair, plot_image_path)
 
-        dataframe_image_url = upload_image_to_imgur(dataframe_image_path)
-        close_plot_url = upload_image_to_imgur(plot_image_path)
+        dataframe_image_url = upload_image_to_imgur(dataframe_image_path, client_id)
+        close_plot_url = upload_image_to_imgur(plot_image_path, client_id)
 
         generate_metadata(trading_pair, dataframe_image_url, close_plot_url, metadata_dir, asset_exchange_map)
 
