@@ -19,7 +19,7 @@ Setup:
 # Set the virtual environment path (edit this variable as needed)
 VENV_PATH="$HOME/myenv/bin"
 
-# Ensure the script is running from the "trading" directory
+# Ensure the script is running from the project root directory for these configs
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA_DIR="$BASE_DIR/data/ohlc_csv"
 
