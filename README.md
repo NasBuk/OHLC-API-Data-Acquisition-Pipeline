@@ -23,7 +23,7 @@ The master bash script enables full automation via cron job automation, running 
 
 ## Repository Structure
 
-- **[fetch_data/download_klines-pseudocode.py](fetch_data/download_klines_pseudocode.py)**  
+- **[fetch_data/download_klines_pseudocode.py](fetch_data/download_klines_pseudocode.py)**  
    Downloads raw OHLC data from configured APIs, handling rate limits, robust error handling, data integrity checks and saving data in a standardized format.
    
 - **[fetch_data/combine_ohlc.py](fetch_data/combine_ohlc.py)**  
