@@ -102,7 +102,7 @@ def process_trading_pair(exchange: str, trading_pair: str, file_format: str, tim
         return None
 
 
-def upload_image_to_imgur(image_path: str) -> str:
+def upload_image_to_imgur(image_path: str, client_id: str) -> str:
     """
     Uploads an image to Imgur and returns the link.
 
@@ -113,7 +113,7 @@ def upload_image_to_imgur(image_path: str) -> str:
     - str: Link to the uploaded image on Imgur.
     """
     url = "https://api.imgur.com/3/image"
-    headers = {'Authorization': 'Client-ID 4aeb3186fb3fbd1'}
+    headers = {'Authorization': f'Client-ID {client_id}'}
     with open(image_path, 'rb') as image_file:
         response = requests.post(url, headers=headers, files={'image': image_file})
     return response.json()['data']['link']
@@ -226,6 +226,7 @@ def main() -> None:
     Returns:
     - None
     """
+    client_id = 'enter_imgur_API_key'
     timeframes = ['1m', '1h', '1d']
     exchanges = list(API_CONFIG.keys())
     exchanges.append('Combined_Index')
@@ -291,8 +292,8 @@ def main() -> None:
             create_dataframe_image(df_subset, trading_pair, dataframe_image_path)
             create_plot_image(df, trading_pair, plot_image_path)
 
-            dataframe_image_url = upload_image_to_imgur(dataframe_image_path)
-            close_plot_url = upload_image_to_imgur(plot_image_path)
+            dataframe_image_url = upload_image_to_imgur(dataframe_image_path, client_id)
+            close_plot_url = upload_image_to_imgur(plot_image_path, client_id)
 
             generate_metadata(trading_pair, dataframe_image_url, close_plot_url, metadata_dir, asset_exchange_map, timeframe)
 

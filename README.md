@@ -1,6 +1,6 @@
 # Multi-Exchange Cryptocurrency OHLC Data Integration and Analysis
 
-This repository provides a comprehensive pipeline for aggregating, cleaning, and combining OHLC (Open, High, Low, Close) cryptocurrency data from multiple exchanges. By using this solution, you can create a continuous, volume-weighted index dataset for any trading pair asset, as well as create raw OHLC datasets from any exchange for any asset and automate the entire process, from data retrieval to data publishing on Kaggle.
+This repository provides a comprehensive pipeline for aggregating, cleaning, and combining OHLC (Open, High, Low, Close) financial data from multiple exchanges. By using this solution, you can create a continuous, volume-weighted index dataset for any trading pair asset, as well as create raw OHLC datasets from any exchange for any asset and automate the entire process, from data retrieval to data publishing on Kaggle.
 
 The master bash script enables full automation via cron job automation, running each Python module in sequence to fetch, process, audit, and upload data. Configurable through `API_CONFIG`, this pipeline is exchange-agnostic—simply add a new API configuration to begin working with a new dataset. This works for any API endpoint that offers OHLCV data, the fetch_data/download_klines.py script is provided as pseudocode for demo purposes as this is proprietary for my own use, if you'd like an asset/exchange added, you can contact me and I'll make the asset available as a dataset on Kaggle.
 
