@@ -167,6 +167,7 @@ def process_ohlc_data(trading_pair: str, exchange_list: List[str]) -> None:
             simple_mean = combined_df.xs(col, axis=1, level=1).mean(axis=1)
             final_df.loc[nan_rows, col] = simple_mean[nan_rows]
 
+    final_df[['Open', 'High', 'Low', 'Close']] = final_df[['Open', 'High', 'Low', 'Close']].round(2)
     # Align 'Open' and 'Close' values and reset the index
     final_df = fix_open_close_alignment(final_df)
     final_df.reset_index(inplace=True, names='Open time')

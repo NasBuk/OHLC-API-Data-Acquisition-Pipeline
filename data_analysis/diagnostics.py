@@ -1,4 +1,9 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import scipy.stats as stats
+from scipy.stats import skew, kurtosis
+import numpy as np
 from typing import Dict, List, Optional, Union
 
 def dataframe_diagnostics(
@@ -7,7 +12,8 @@ def dataframe_diagnostics(
     print_gaps: bool = False,
     print_diagnostics: bool = True,
     check_ohlc: bool = False,
-    return_values: bool = True
+    return_values: bool = True,
+    timeframe: str = '1m'  # New parameter for expected time difference
 ) -> Optional[Dict[str, Union[int, List[str], Optional[str], List[Dict[str, Union[int, str, pd.Timedelta]]]]]]:
     """
     Perform diagnostics on a DataFrame to check for data issues, gaps, and NaN values. Multi-purpose function
@@ -21,6 +27,7 @@ def dataframe_diagnostics(
     - print_diagnostics (bool): Whether to print detailed diagnostics information.
     - check_ohlc (bool): Whether to run an integrity check on OHLC values.
     - return_values (bool): Whether to return diagnostic results as a dictionary.
+    - timeframe (str): The timeframe for the data (e.g., '1m', '1h', '1d').
 
     Returns:
     - Optional[Dict[str, Union[int, List[str], Optional[str], List[Dict[str, Union[int, str, pd.Timedelta]]]]]]:
@@ -31,13 +38,23 @@ def dataframe_diagnostics(
     nan_cols = df.columns[df.isna().any()].tolist()              # Columns with any NaN values
     rows_with_nans = df.isna().any(axis=1).sum()                 # Total rows with any NaN values
 
-    # Find all rows in which the gaps between subsequent rows is greater than the expected difference
+    # Define the expected time difference based on the timeframe
+    if timeframe == '1m':
+        expected_diff = pd.Timedelta(minutes=1)
+    elif timeframe == '1h':
+        expected_diff = pd.Timedelta(hours=1)
+    elif timeframe == '1d':
+        expected_diff = pd.Timedelta(days=1)
+    else:
+        raise ValueError("Unsupported timeframe. Please use '1m', '1h', or '1d'.")
+
+    # Find all rows where the gaps between subsequent rows are greater than the expected difference
     discontinuities = []
-    expected_diff = pd.Timedelta(minutes=1) # Currently for 1m data
     time_diffs = df['Open time'].diff().dropna()
     discontinuities = time_diffs[time_diffs != expected_diff].index.tolist()
 
-    # Identify the start and end of each gap, the gap size and indices of gaps
+    # Identify the start and end of each gap, the gap size, and indices of gaps
+    gap_details = []
     if print_gaps:
         gap_details = [
             {
@@ -62,6 +79,7 @@ def dataframe_diagnostics(
     # All results will be printed to terminal in formatted output if print_diagnostics is True
     if print_diagnostics:
         print(f"\n--- {stage} Diagnostics ---")
+        print(f"Timeframe: {timeframe}")
         print(f"Start 'Open time': {df['Open time'].iloc[0]}, End 'Open time': {df['Open time'].iloc[-1]}")
         print(f"Size: {size} rows")
         print(f"Total NaNs: {total_nans}")
@@ -142,3 +160,151 @@ def ohlc_integrity_check(df: pd.DataFrame) -> Dict[str, Union[int, pd.DataFrame]
         'invalid_high_rows': invalid_high,
         'invalid_low_rows': invalid_low
     }
+
+    
+def classify_nans(data: Union[pd.Series, pd.DataFrame]) -> Dict[str, Dict[str, Union[int, str]]]:
+    """
+    Classify NaNs in a series or DataFrame as leading, trailing, interspersed, or full-column.
+
+    Parameters:
+    - data (pd.Series or pd.DataFrame): The data containing NaNs to be classified.
+
+    Returns:
+    - dict: Summary of NaN classifications by column.
+    """
+    def classify_single_series(nan_series):
+        """Classify NaNs in a single series."""
+        nan_count = nan_series.sum()
+
+        if nan_series.all():
+            return nan_count, "Full-column NaNs"
+
+        non_nan_idx = nan_series[nan_series == False].index  # Indexes of non-NaN values
+        if len(non_nan_idx) == 0:
+            return nan_count, "Full-column NaNs"
+
+        leading_nans = non_nan_idx[0] > 0
+        trailing_nans = non_nan_idx[-1] < len(nan_series) - 1
+        interspersed_nans = nan_series[non_nan_idx[0]:non_nan_idx[-1]].any()
+
+        nan_types = []
+        if leading_nans:
+            nan_types.append("Leading NaNs")
+        if trailing_nans:
+            nan_types.append("Trailing NaNs")
+        if interspersed_nans:
+            nan_types.append("Interspersed NaNs")
+
+        return nan_count, ", ".join(nan_types) if nan_types else "No NaNs"
+
+    if isinstance(data, pd.Series):
+        nan_count, classification = classify_single_series(data.isna())
+        return {data.name: {"nan_count": nan_count, "classification": classification}}
+
+    elif isinstance(data, pd.DataFrame):
+        nan_summary = {}
+        for column in data.columns:
+            nan_count, classification = classify_single_series(data[column].isna())
+            nan_summary[column] = {"nan_count": nan_count, "classification": classification}
+        return nan_summary
+
+    else:
+        raise ValueError("Input must be a pandas Series or DataFrame")
+
+
+def dataframe_statistics(df):
+    """
+    Calculate and print various statistics for each column in the dataframe, excluding the datetime column.
+    """
+    # Temporarily drop the 'Open time' column
+    if 'Open time' and 'Close time' in df.columns:
+        df_numeric = df.drop(columns=['Open time', 'Close time'])
+    elif 'Open time' in df.columns:
+        df_numeric = df.drop(columns=['Open time'])
+    else:
+        df_numeric = df
+
+    print("\n--- DataFrame Statistics ---")
+    print("Summary Statistics:")
+    print(df_numeric.describe())
+
+    print("\nSkewness of Columns:")
+    print(df_numeric.skew())
+
+    print("\nKurtosis of Columns:")
+    print(df_numeric.kurt())
+
+    print("\nMissing Values per Column:")
+    print(df_numeric.isna().sum())
+
+    print("\nCorrelation Matrix:")
+    print(df_numeric.corr())
+
+
+def visualize_distribution_with_stats(df, columns=None, bins=30, log_scale=False):
+    """
+    Visualizes data distribution for specified columns in a DataFrame by plotting histogram, 
+    box plot, violin plot, KDE plot, and QQ plot as subplots, and prints summary statistics.
+
+    Args:
+    df (pd.DataFrame): DataFrame containing the data to be visualized.
+    columns (list): List of column names to visualize. If None, all columns are visualized.
+    bins (int): Number of bins for histograms.
+    log_scale (bool): Apply log scale to the plots.
+    """
+    if columns is None:
+        columns = df.columns
+    
+    for col in columns:
+        data = df[col].dropna()
+
+        # Summary Statistics
+        print(f"--- Summary Statistics for {col} ---")
+        print(f"Mean: {np.mean(data)}")
+        print(f"Standard Deviation: {np.std(data)}")
+        print(f"Skewness: {skew(data)}")
+        print(f"Kurtosis: {kurtosis(data)}")
+        print("\n")
+
+        # Creating the subplots
+        fig, axes = plt.subplots(3, 2, figsize=(14, 10))  # 3 rows, 2 columns of subplots
+        fig.suptitle(f'Data Distribution for {col}', fontsize=16)
+
+        # Plot 1: Histogram
+        ax1 = axes[0, 0]
+        ax1.hist(data, bins=bins, edgecolor='black')
+        ax1.set_title('Histogram')
+        ax1.set_xlabel(col)
+        ax1.set_ylabel('Frequency')
+        if log_scale:
+            ax1.set_yscale('log')
+
+        # Plot 2: Box Plot
+        ax2 = axes[0, 1]
+        ax2.boxplot(data, vert=False)
+        ax2.set_title('Box Plot')
+        ax2.set_xlabel(col)
+
+        # Plot 3: Violin Plot
+        ax3 = axes[1, 0]
+        sns.violinplot(x=data, ax=ax3)
+        ax3.set_title('Violin Plot')
+        ax3.set_xlabel(col)
+
+        # Plot 4: KDE Plot
+        ax4 = axes[1, 1]
+        sns.kdeplot(data, fill=True, ax=ax4)
+        ax4.set_title('KDE Plot')
+        ax4.set_xlabel(col)
+        ax4.set_ylabel('Density')
+
+        # Plot 5: QQ Plot
+        ax5 = axes[2, 0]
+        stats.probplot(data, dist="norm", plot=ax5)
+        ax5.set_title('QQ Plot')
+
+        # Remove unused subplot (axes[2, 1])
+        fig.delaxes(axes[2, 1])
+
+        plt.tight_layout(rect=[0, 0, 1, 0.95])  # Adjust layout to fit title
+        plt.show()

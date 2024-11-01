@@ -30,14 +30,14 @@ Structures:
 """
 
 metadata_template = {
-    "title": "{currency_name}, 7 Exchanges, 1m Full Historical Data",
-    "subtitle": "The Most Complete, Continuous and Clean {currency_abbr} Dataset for ML Engineers/Analysts",
-    "id": "imranbukhari/comprehensive-{currency_abbr}-1m-data",
+    "title": "{currency_name}, 7 Exchanges, {timeframe} Full Historical Data",
+    "subtitle": "The Most Complete, Continuous and Clean {currency_abbr} {timeframe} Dataset for ML Engineers",
+    "id": "imranbukhari/comprehensive-{currency_abbr}-{timeframe}-data",
     "description": """I am a new developer and I would greatly appreciate your support. If you find this dataset helpful, please consider giving it an upvote!
     
 # Key Features:
 
-**Complete 1-Minute Data:** Raw 1-minute historical data from multiple exchanges, covering the entire trading history of {currency_abbr} available through their API endpoints. This dataset is updated daily to ensure up-to-date coverage.
+**Complete {timeframe} Data:** Raw {timeframe} historical data from multiple exchanges, covering the entire trading history of {currency_abbr} available through their API endpoints. This dataset is updated daily to ensure up-to-date coverage.
 
 **Combined Index Dataset:** A unique feature of this dataset is the combined index, which is derived by averaging all other datasets into one, please see attached notebook. This creates the longest continuous, unbroken {currency_abbr} dataset available on Kaggle, with no gaps and no erroneous values. It gives a much more comprehensive view of the market i.e. total volume across multiple exchanges.
 
@@ -63,6 +63,7 @@ metadata_template = {
         }
     ]
 }
+
 
 currency_name_map = {
     "BTCUSD": "Bitcoin",

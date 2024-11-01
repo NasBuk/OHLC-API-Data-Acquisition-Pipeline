@@ -55,7 +55,7 @@ def save_data_with_check(df_new: pd.DataFrame, log_filename: str) -> None:
         print("No new records to save. All records already exist.")
 
 
-def process_trading_pair(exchange: str, trading_pair: str, file_format: str) -> dict:
+def process_trading_pair(exchange: str, trading_pair: str, file_format: str, timeframe: str) -> dict:
     """
     Processes OHLC data for a trading pair from a specific exchange, returning diagnostic metrics.
 
@@ -63,25 +63,27 @@ def process_trading_pair(exchange: str, trading_pair: str, file_format: str) -> 
     - exchange (str): Name of the exchange.
     - trading_pair (str): Trading pair identifier.
     - file_format (str): Format of the file to load ('pkl' or 'csv').
+    - timeframe (str): Timeframe of the data ('1m', '1h', '1d').
 
     Returns:
     - dict: Dictionary of diagnostics information for the processed trading pair.
     """
     try:
-        # Pickle and csv formats are both used to storing data, both are diagnosed separately
+        # Define the file path based on the timeframe
         if file_format == 'pkl':
-            df = load_data(f'data/ohlc/{trading_pair}/{trading_pair}_1m_{exchange}.pkl')
+            df = load_data(f'data/ohlc/{trading_pair}/{timeframe}/{trading_pair}_{timeframe}_{exchange}.pkl')
         elif file_format == 'csv':
-            df = load_data(f'data/ohlc_csv/{trading_pair}/{trading_pair}_1m_{exchange}.csv', file_type='csv')
+            df = load_data(f'data/ohlc_csv/{trading_pair}/{timeframe}/{trading_pair}_{timeframe}_{exchange}.csv', file_type='csv')
 
         df['Open time'] = pd.to_datetime(df['Open time'])
 
-        # Perform diagnostics, refer to the module to see how these are performed
-        diagnostics = dataframe_diagnostics(df, print_diagnostics=False, print_gaps=True, return_values=True, check_ohlc=True)
+        # Perform diagnostics with the specified timeframe
+        diagnostics = dataframe_diagnostics(df, print_diagnostics=False, print_gaps=True, return_values=True, check_ohlc=True, timeframe=timeframe)
 
         # Return the result in dictionary form
         return {
             'File Format': file_format,
+            'Timeframe': timeframe,
             'Trading Pair': trading_pair,
             'Exchange': exchange,
             'Data Range': f"{diagnostics['data_range'].split(' - ')[0].split()[0]} - {diagnostics['data_range'].split(' - ')[1].split()[0]}",
@@ -96,11 +98,11 @@ def process_trading_pair(exchange: str, trading_pair: str, file_format: str) -> 
             'Invalid Lows': diagnostics['invalid_lows'],
         }
     except Exception as e:
-        print(f"Error processing {trading_pair} on {exchange} with {file_format}: {e}")
+        print(f"Error processing {trading_pair} on {exchange} with {file_format} and {timeframe}: {e}")
         return None
 
 
-def upload_image_to_imgur(image_path: str, client_id: str) -> str:
+def upload_image_to_imgur(image_path: str) -> str:
     """
     Uploads an image to Imgur and returns the link.
 
@@ -111,15 +113,15 @@ def upload_image_to_imgur(image_path: str, client_id: str) -> str:
     - str: Link to the uploaded image on Imgur.
     """
     url = "https://api.imgur.com/3/image"
-    headers = {'Authorization': f'Client-ID {client_id}'}
+    headers = {'Authorization': 'Client-ID 4aeb3186fb3fbd1'}
     with open(image_path, 'rb') as image_file:
         response = requests.post(url, headers=headers, files={'image': image_file})
     return response.json()['data']['link']
 
 
-def generate_metadata(trading_pair: str, imgur_url_1: str, imgur_url_2: str, output_dir: str, asset_exchange_map: dict) -> None:
+def generate_metadata(trading_pair: str, imgur_url_1: str, imgur_url_2: str, output_dir: str, asset_exchange_map: dict, timeframe: str) -> None:
     """
-    Generates metadata for a dataset and saves it to a a Kaggle metadata.json file, required for interacting
+    Generates metadata for a dataset and saves it to a Kaggle metadata.json file, required for interacting
     with Kaggle's API for dataset updates.
 
     Parameters:
@@ -128,6 +130,7 @@ def generate_metadata(trading_pair: str, imgur_url_1: str, imgur_url_2: str, out
     - imgur_url_2 (str): Link to the second image on Imgur.
     - output_dir (str): Directory to save the metadata file.
     - asset_exchange_map (dict): Mapping of trading pairs to exchanges.
+    - timeframe (str): Timeframe of the data ('1m', '1h', '1d').
 
     Returns:
     - None
@@ -137,16 +140,16 @@ def generate_metadata(trading_pair: str, imgur_url_1: str, imgur_url_2: str, out
 
     # Make a deep copy of the metadata template to reset for each trading pair and not include previous appends
     metadata = copy.deepcopy(metadata_template)
-    metadata["title"] = metadata["title"].format(currency_name=currency_name, currency_abbr=trading_pair)
-    metadata["subtitle"] = metadata["subtitle"].format(currency_abbr=trading_pair)
-    metadata["id"] = metadata["id"].format(currency_abbr=trading_pair)
-    metadata["description"] = metadata["description"].format(currency_abbr=trading_pair, imgur_url_1=imgur_url_1, imgur_url_2=imgur_url_2)
+    metadata["title"] = metadata["title"].format(currency_name=currency_name, currency_abbr=trading_pair, timeframe=timeframe)
+    metadata["subtitle"] = metadata["subtitle"].format(currency_abbr=trading_pair, timeframe=timeframe)
+    metadata["id"] = metadata["id"].format(currency_abbr=trading_pair, timeframe=timeframe)
+    metadata["description"] = metadata["description"].format(currency_abbr=trading_pair, timeframe=timeframe, imgur_url_1=imgur_url_1, imgur_url_2=imgur_url_2)
 
-    # Add the relevant resources based on the exchanges that provide data for this trading pair
+    # Add the relevant resources based on the exchanges that provide data for this trading pair and timeframe
     for exchange in asset_exchange_map[trading_pair]:
         metadata["resources"].append({
-            "path": f"{trading_pair}_1m_{exchange}.csv",
-            "description": f"1-minute historical data for {trading_pair} from {exchange}",
+            "path": f"{trading_pair}_{timeframe}_{exchange}.csv",
+            "description": f"{timeframe} historical data for {trading_pair} from {exchange}",
             "schema": {
                 "fields": exchange_schemas.get(exchange, [])
             }
@@ -157,7 +160,7 @@ def generate_metadata(trading_pair: str, imgur_url_1: str, imgur_url_2: str, out
     with open(output_file, "w") as f:
         json.dump(metadata, f, indent=2)
 
-    print(f"Metadata for {currency_name} ({trading_pair}) saved to {output_file}")
+    print(f"Metadata for {currency_name} ({trading_pair}) at {timeframe} saved to {output_file}")
 
 
 def create_dataframe_image(df_sorted: pd.DataFrame, trading_pair: str, image_path: str) -> str:
@@ -223,76 +226,78 @@ def main() -> None:
     Returns:
     - None
     """
-    client_id = client_id               # Replace with your API client id
+    timeframes = ['1m', '1h', '1d']
     exchanges = list(API_CONFIG.keys())
     exchanges.append('Combined_Index')
-    results_pkl = []
-    results_csv = []
 
-    # Use ThreadPoolExecutor for concurrency
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = []
+    for timeframe in timeframes:
+        results_pkl = []
+        results_csv = []
 
-        # Submit tasks for each exchange and trading pair for both pkl and csv source files
-        for exchange in exchanges:
-            if exchange == 'Combined_Index':
-                pair_keys = list(API_CONFIG['Binance']['pairs'].keys())
-            else:
-                pair_keys = list(API_CONFIG[exchange]['pairs'].keys())
+        # Use ThreadPoolExecutor for concurrency
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = []
 
+            # Submit tasks for each exchange and trading pair for both pkl and csv source files
+            for exchange in exchanges:
+                if exchange == 'Combined_Index':
+                    pair_keys = list(API_CONFIG['Binance']['pairs'].keys())
+                else:
+                    pair_keys = list(API_CONFIG[exchange]['pairs'].keys())
+
+                for trading_pair in pair_keys:
+                    futures.append(executor.submit(process_trading_pair, exchange, trading_pair, 'pkl', timeframe))
+                    futures.append(executor.submit(process_trading_pair, exchange, trading_pair, 'csv', timeframe))
+
+            # Collect results as they are completed
+            for future in concurrent.futures.as_completed(futures):
+                result = future.result()
+                if result:
+                    if result['File Format'] == 'pkl':
+                        results_pkl.append(result)
+                    elif result['File Format'] == 'csv':
+                        results_csv.append(result)
+
+        # Create DataFrames from the results
+        df_pkl = pd.DataFrame(results_pkl)
+        df_csv = pd.DataFrame(results_csv)
+
+        # Sort by 'Exchange' and 'Trading Pair', then drop 'File Format' and reset index for presenting the summary tables
+        df_pkl_sorted = df_pkl.sort_values(by=['Exchange', 'Trading Pair']).drop(columns=['File Format']).reset_index(drop=True)
+        df_csv_sorted = df_csv.sort_values(by=['Exchange', 'Trading Pair']).drop(columns=['File Format']).reset_index(drop=True)
+
+        # Generate a dictionary of which exchange provides data for which currencies
+        asset_exchange_map = {}
+        for exchange in API_CONFIG:
+            pair_keys = list(API_CONFIG[exchange]['pairs'].keys())
             for trading_pair in pair_keys:
-                futures.append(executor.submit(process_trading_pair, exchange, trading_pair, 'pkl'))
-                futures.append(executor.submit(process_trading_pair, exchange, trading_pair, 'csv'))
+                if trading_pair not in asset_exchange_map:
+                    asset_exchange_map[trading_pair] = []
+                asset_exchange_map[trading_pair].append(exchange)
 
-        # Collect results as they are completed
-        for future in concurrent.futures.as_completed(futures):
-            result = future.result()
-            if result:
-                if result['File Format'] == 'pkl':
-                    results_pkl.append(result)
-                elif result['File Format'] == 'csv':
-                    results_csv.append(result)
-
-    # Create DataFrames from the results
-    df_pkl = pd.DataFrame(results_pkl)
-    df_csv = pd.DataFrame(results_csv)
-
-    # Sort by 'Exchange' and 'Trading Pair', then drop 'File Format' and reset index for presenting the summary tables
-    df_pkl_sorted = df_pkl.sort_values(by=['Exchange', 'Trading Pair']).drop(columns=['File Format']).reset_index(drop=True)
-    df_csv_sorted = df_csv.sort_values(by=['Exchange', 'Trading Pair']).drop(columns=['File Format']).reset_index(drop=True)
-
-    # Generate a dictionary of which exchange provides data for which currencies
-    asset_exchange_map = {}
-    for exchange in API_CONFIG:
-        pair_keys = list(API_CONFIG[exchange]['pairs'].keys())
+        # Generate images for each trading pair by creating subsets from the aggregated dataframe
+        # Binance is used to generate the pair_keys (i.e., BTCUSD) because it supports all pairs.
+        # Metadata for each currency pair is generated here, including images, links, and diagnostic summaries
+        pair_keys = list(API_CONFIG['Binance']['pairs'].keys())
         for trading_pair in pair_keys:
-            if trading_pair not in asset_exchange_map:
-                asset_exchange_map[trading_pair] = []
-            asset_exchange_map[trading_pair].append(exchange)
+            metadata_dir = f"/home/hooch/trading/data/ohlc_csv/{trading_pair}/{timeframe}"
+            dataframe_image_path = f"/home/hooch/trading/data/images/{trading_pair}_{timeframe}_dataframe.png"
+            plot_image_path = f"/home/hooch/trading/data/images/{trading_pair}_{timeframe}_plot.png"
 
-    # Generate images for each trading pair by creating subsets from the aggregated dataframe
-    # Binance is used to generate the pair_keys (i.e. BTCUSD) because it supports all pairs.
-    # Metadata for each currency pair is generated here, including images, links and diagnostic summaries
-    pair_keys = list(API_CONFIG['Binance']['pairs'].keys())
-    for trading_pair in pair_keys:
-        metadata_dir = f"/home/hooch/trading/data/ohlc_csv/{trading_pair}"
-        dataframe_image_path = f"/home/hooch/trading/data/images/{trading_pair}_dataframe.png"
-        plot_image_path = f"/home/hooch/trading/data/images/{trading_pair}_plot.png"
+            df_subset = df_pkl_sorted[df_pkl_sorted['Trading Pair'] == trading_pair]
+            df_subset = df_subset.reset_index(drop=True)
+            df = load_data(f'data/ohlc/{trading_pair}/{timeframe}/{trading_pair}_{timeframe}_Combined_Index.pkl')
 
-        df_subset = df_pkl_sorted[df_pkl_sorted['Trading Pair'] == trading_pair]
-        df_subset = df_subset.reset_index(drop=True)
-        df = load_data(f'data/ohlc/{trading_pair}/{trading_pair}_1m_Combined_Index.pkl')
+            create_dataframe_image(df_subset, trading_pair, dataframe_image_path)
+            create_plot_image(df, trading_pair, plot_image_path)
 
-        create_dataframe_image(df_subset, trading_pair, dataframe_image_path)
-        create_plot_image(df, trading_pair, plot_image_path)
+            dataframe_image_url = upload_image_to_imgur(dataframe_image_path)
+            close_plot_url = upload_image_to_imgur(plot_image_path)
 
-        dataframe_image_url = upload_image_to_imgur(dataframe_image_path, client_id)
-        close_plot_url = upload_image_to_imgur(plot_image_path, client_id)
+            generate_metadata(trading_pair, dataframe_image_url, close_plot_url, metadata_dir, asset_exchange_map, timeframe)
 
-        generate_metadata(trading_pair, dataframe_image_url, close_plot_url, metadata_dir, asset_exchange_map)
-
-    save_data_with_check(df_pkl_sorted, 'pkl_log')
-    save_data_with_check(df_csv_sorted, 'csv_log')
+        save_data_with_check(df_pkl_sorted, f'{timeframe}_pkl_log')
+        save_data_with_check(df_csv_sorted, f'{timeframe}_csv_log')
 
 if __name__ == "__main__":
     main()

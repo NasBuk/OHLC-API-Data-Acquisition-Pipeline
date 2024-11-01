@@ -84,17 +84,13 @@ def initialize_data(filename: str, start_date: str, exchange: str) -> Tuple[pd.D
 
 
 def calculate_total_requests(start_datetime: datetime, end_datetime: datetime, candles_per_request: int) -> int:
-    """
-    Calculates the total requests to be made by determining the total amount of minutes between
-    the start and the end datetime and dividing that by the candle request limit for the exchange.
-    """
+    # Calculates the total requests to be made by determining the total amount of minutes between
+    # the start and the end datetime and dividing that by the candle request limit for the exchange.
 
 
 def print_parameters(symbol: str, start_datetime: datetime, end_datetime: datetime, filename: str, timeframe: str) -> None:
-    """
-    Print the parameters used for data fetching, including the symbol, interval, start and end times, 
-    and output file location.
-    """
+    # Print the parameters used for data fetching, including the symbol, interval, start and end times, 
+    # and output file location.
 
 
 def handle_rate_limiting(response: requests.Response, retry_count: int, max_retries: int, retry_delay: int) -> int:

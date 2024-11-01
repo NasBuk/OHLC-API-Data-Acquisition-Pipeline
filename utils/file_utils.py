@@ -58,7 +58,8 @@ def load_data(file_path: str, file_type: str = 'pickle', set_index: str = None,
 
 def save_data(data, file_path: str, file_type: str = 'pickle', 
               drop_columns: list = None, reset_index: bool = False, 
-              log_info: bool = True, create_missing_dirs: bool = True):
+              log_info: bool = True, create_missing_dirs: bool = True, 
+              append_if_exists: bool = True):
     """
     Save a pickle dataframe, CSV, or numpy data to a file. Index can be reset, and
     columns can be optionally dropped before saving.
@@ -70,6 +71,8 @@ def save_data(data, file_path: str, file_type: str = 'pickle',
     drop_columns (list, optional): Columns to drop if saving a DataFrame. Defaults to None.
     reset_index (bool, optional): Whether to reset the index if saving a DataFrame. Defaults to False.
     log_info (bool): Whether to log the process. Defaults to True.
+    create_missing_dirs (bool): Whether to create missing directories in the path. Defaults to True.
+    append_if_exists (bool): Whether to append to the file if it exists (only for CSV). Defaults to True.
     """
     try:
         full_path = create_path(file_path, create_missing_dirs=create_missing_dirs, log_info=log_info)
@@ -89,8 +92,8 @@ def save_data(data, file_path: str, file_type: str = 'pickle',
             if reset_index:
                 data.reset_index(inplace=True)
             
-            # Check if the file exists, if so append, otherwise write
-            if os.path.exists(full_path):
+            # Check if the file exists and whether to append or overwrite
+            if os.path.exists(full_path) and append_if_exists:
                 data.to_csv(full_path, mode='a', header=False, index=False)
                 if log_info:
                     logging.info(f"Data appended to CSV file: {file_path}")

@@ -19,7 +19,7 @@ Setup:
 # Set the virtual environment path (edit this variable as needed)
 VENV_PATH="$HOME/myenv/bin"
 
-# Ensure the script is running from the project root directory for these configs
+# Ensure the script is running from the "trading" directory
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA_DIR="$BASE_DIR/data/ohlc_csv"
 
@@ -32,11 +32,14 @@ source "$VENV_PATH/activate"
 # Step 2: Combine and clean the datasets
 "$VENV_PATH/python3.12" "$BASE_DIR/fetch_data/combine_ohlc.py"
 
-# Step 3: Audit the data and generate metadata for Kaggle
+# Step 3: Resample for higher timeframes
+"$VENV_PATH/python3.12" "$BASE_DIR/fetch_data/resample_timeframe.py"
+
+# Step 4: Audit the data and generate metadata for Kaggle
 "$VENV_PATH/python3.12" "$BASE_DIR/fetch_data/audit_and_metagen.py"
 
-# Step 4: Loop through each trading pair dataset directory and upload it to Kaggle
-for trading_pair_dir in "$DATA_DIR"/*; do
+# Step 5: Loop through each trading pair dataset directory and upload it to Kaggle
+for trading_pair_dir in "$DATA_DIR"/*/*; do
     if [ -d "$trading_pair_dir" ]; then
         "$VENV_PATH/kaggle" datasets version -p "$trading_pair_dir" -m "updated" -d
     fi
